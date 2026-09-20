@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package lifesure.underwriting;
+
+option go_package = "github.com/Antozzi/grpc-training/gen/pb/underwriting";
+
+import "common/common.proto";
+
+service UnderwritingService {
+  // Client-streaming: the applicant streams medical history records one at
+  // a time; the server aggregates them and replies once, after the client
+  // closes the stream, with a single underwriting decision.
+  rpc SubmitMedicalHistory(stream SubmitMedicalHistoryRequest) returns (UnderwritingDecision);
+}
+
+enum RecordType {
+  RECORD_TYPE_UNSPECIFIED = 0;
+  RECORD_TYPE_CONDITION = 1;
+  RECORD_TYPE_MEDICATION = 2;
+  RECORD_TYPE_FAMILY_HISTORY = 3;
+  RECORD_TYPE_LIFESTYLE = 4;
+}
+
+// The first message on the stream must carry a context; every message after
+// that must carry a record. This framing lets the server hold the baseline
+// quote data without repeating it on every streamed record.
+message SubmitMedicalHistoryRequest {
+  oneof payload {
+    ApplicationContext context = 1;
+    MedicalRecord record = 2;
+  }
+}
+
+message ApplicationContext {
+  string quote_id = 1;
+  int32 age = 2;
+  bool smoker = 3;
+  lifesure.common.Money base_monthly_premium = 4;
+  lifesure.common.RiskTier base_risk_tier = 5;
+}
+
+message MedicalRecord {
+  RecordType type = 1;
+  string description = 2;
+  int32 severity = 3; // subjective 0-10 risk score, for demo purposes
+}
+
+message UnderwritingDecision {
+  string quote_id = 1;
+  bool approved = 2;
+  lifesure.common.RiskTier final_risk_tier = 3;
+  lifesure.common.Money adjusted_monthly_premium = 4;
+  string notes = 5;
+}

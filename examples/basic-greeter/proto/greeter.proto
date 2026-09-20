@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package greeter;
 
-option go_package = "github.com/Antozzi/grpc-training/gen/pb";
+option go_package = "github.com/Antozzi/grpc-training/examples/basic-greeter/gen/pb";
 
 service Greeter {
   // Unary RPC: single request, single response.

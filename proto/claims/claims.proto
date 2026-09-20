@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package lifesure.claims;
+
+option go_package = "github.com/Antozzi/grpc-training/gen/pb/claims";
+
+service ClaimsService {
+  // Bidirectional streaming: the claimant streams claim events (opening the
+  // claim, submitting documents, updating information, closing it) while the
+  // server concurrently streams back status updates as the claim moves
+  // through the review pipeline.
+  rpc ProcessClaim(stream ClaimEvent) returns (stream ClaimStatusUpdate);
+}
+
+enum ClaimEventType {
+  CLAIM_EVENT_TYPE_UNSPECIFIED = 0;
+  CLAIM_EVENT_TYPE_OPENED = 1;
+  CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED = 2;
+  CLAIM_EVENT_TYPE_INFO_UPDATED = 3;
+  CLAIM_EVENT_TYPE_CLOSED = 4;
+}
+
+message ClaimEvent {
+  string policy_id = 1;
+  // Empty on the first (OPENED) event; the server assigns and returns it.
+  string claim_id = 2;
+  ClaimEventType type = 3;
+  string detail = 4;
+}
+
+enum ClaimStage {
+  CLAIM_STAGE_UNSPECIFIED = 0;
+  CLAIM_STAGE_RECEIVED = 1;
+  CLAIM_STAGE_UNDER_REVIEW = 2;
+  CLAIM_STAGE_ADDITIONAL_INFO_REQUIRED = 3;
+  CLAIM_STAGE_APPROVED = 4;
+  CLAIM_STAGE_DENIED = 5;
+}
+
+message ClaimStatusUpdate {
+  string claim_id = 1;
+  ClaimStage stage = 2;
+  string message = 3;
+}

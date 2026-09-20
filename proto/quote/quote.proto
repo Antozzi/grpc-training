@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package lifesure.quote;
+
+option go_package = "github.com/Antozzi/grpc-training/gen/pb/quote";
+
+import "common/common.proto";
+
+service QuoteService {
+  // Unary: score an applicant and return a priced, time-limited quote.
+  rpc GetQuote(QuoteRequest) returns (QuoteResponse);
+}
+
+message QuoteRequest {
+  int32 age = 1;
+  bool smoker = 2;
+  lifesure.common.Money coverage_amount = 3;
+  int32 term_years = 4;
+}
+
+message QuoteResponse {
+  string quote_id = 1;
+  lifesure.common.Money monthly_premium = 2;
+  lifesure.common.RiskTier risk_tier = 3;
+  string expires_at = 4; // RFC3339 timestamp
+}

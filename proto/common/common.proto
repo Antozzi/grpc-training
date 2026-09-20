@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package lifesure.common;
+
+option go_package = "github.com/Antozzi/grpc-training/gen/pb/common";
+
+// Money avoids floating point for currency, following the pattern used by
+// google.type.Money: a currency code plus an integer amount in minor units
+// (e.g. cents).
+message Money {
+  string currency_code = 1;
+  int64 minor_units = 2;
+}
+
+enum RiskTier {
+  RISK_TIER_UNSPECIFIED = 0;
+  RISK_TIER_LOW = 1;
+  RISK_TIER_STANDARD = 2;
+  RISK_TIER_ELEVATED = 3;
+  RISK_TIER_DECLINED = 4;
+}

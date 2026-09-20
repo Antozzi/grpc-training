@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package lifesure.policy;
+
+option go_package = "github.com/Antozzi/grpc-training/gen/pb/policy";
+
+import "common/common.proto";
+
+service PolicyService {
+  // Unary: issue a policy from an approved, underwritten quote.
+  rpc CreatePolicy(CreatePolicyRequest) returns (Policy);
+  // Unary: fetch a single policy by ID.
+  rpc GetPolicy(GetPolicyRequest) returns (Policy);
+  // Server-streaming: stream every policy owned by a holder.
+  rpc ListPolicies(ListPoliciesRequest) returns (stream Policy);
+}
+
+message CreatePolicyRequest {
+  string quote_id = 1;
+  string holder_id = 2;
+  string holder_name = 3;
+  lifesure.common.Money monthly_premium = 4;
+  lifesure.common.Money coverage_amount = 5;
+  int32 term_years = 6;
+}
+
+message Policy {
+  string policy_id = 1;
+  string holder_id = 2;
+  string holder_name = 3;
+  lifesure.common.Money monthly_premium = 4;
+  lifesure.common.Money coverage_amount = 5;
+  int32 term_years = 6;
+  string status = 7; // ACTIVE, LAPSED, CANCELLED
+  string issued_at = 8; // RFC3339 timestamp
+}
+
+message GetPolicyRequest {
+  string policy_id = 1;
+}
+
+message ListPoliciesRequest {
+  string holder_id = 1;
+}

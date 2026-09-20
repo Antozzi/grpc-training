@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/Antozzi/grpc-training/gen/pb"
+	pb "github.com/Antozzi/grpc-training/examples/basic-greeter/gen/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
