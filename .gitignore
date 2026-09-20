@@ -4,4 +4,10 @@
 /bin/
 .DS_Store
 .claude/
-postman/
+# Postman's Local Workspace sync artifacts (auto-created wherever it finds
+# .proto/spec files); the hand-authored postman/README.md and
+# postman/LifeSure.postman_environment.json stay tracked.
+/postman/.postman/
+/postman/postman/
+/proto/.postman/
+/proto/postman/
