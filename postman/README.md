@@ -1,5 +1,48 @@
 # Testing LifeSure in Postman
 
+## The story: what you're actually testing
+
+Meet **Anton**. He's 45, doesn't smoke, and wants a life insurance policy
+that pays out $250,000 to his family if something happens to him, for the
+next 20 years. Here's what happens behind the scenes, and which gRPC call
+does each part — this is the same story `make demo` runs end to end, just
+walked through by hand in Postman instead:
+
+1. **"How much would this cost me?"** Anton fills out a quote form: his
+   age, whether he smokes, how much coverage he wants, for how long. The
+   insurer prices it instantly and gives him a number — **but it's not
+   final yet**, because they haven't looked at his health.
+   → `QuoteService.GetQuote`
+
+2. **"Now tell us about your health."** Before the insurer commits to that
+   price, they need Anton's medical history: any conditions, medications,
+   lifestyle factors. He sends these one at a time (like filling out a
+   multi-page medical form), and once he's done, the underwriter reviews
+   everything at once and comes back with a final decision — approved or
+   declined, and the price adjusted up if he's riskier than the initial
+   guess assumed.
+   → `UnderwritingService.SubmitMedicalHistory`
+
+3. **"You're approved — here's your policy."** With underwriting done, the
+   insurer actually issues the policy: a real contract with a policy
+   number, at the agreed price.
+   → `PolicyService.CreatePolicy`
+
+4. **"Let me check my policy."** Later, Anton (or the insurer's support
+   staff) can look up that one policy, or list every policy he holds.
+   → `PolicyService.GetPolicy`, `PolicyService.ListPolicies`
+
+5. **"I need to make a claim."** Eight months later, Anton is hospitalized.
+   He opens a claim, uploads his discharge summary and an itemized
+   invoice, then tells the insurer he's submitted everything. The whole
+   time, the insurer's system is pushing him live status updates —
+   received, under review, and finally approved for payout (or denied, if
+   he hadn't provided enough documentation).
+   → `ClaimsService.ProcessClaim`
+
+Each step below is one of these calls, in the same order, with the exact
+address and message to send.
+
 ## A note on what's in this folder
 
 Postman auto-created `.postman/` and `postman/postman/` here as part of its
