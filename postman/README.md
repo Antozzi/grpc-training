@@ -33,7 +33,32 @@ by hand as you go (click the eye icon next to the environment dropdown →
 edit → paste the ID from a response, since there's no collection scripting
 here to do it for you).
 
-## 3. Create each gRPC request
+## Option A: import the pre-built collection
+
+`postman/LifeSure.postman_collection.json` has all six requests pre-filled
+with the addresses and message bodies below. **File → Import** it — give it
+a moment, then check the collection actually shows up with gRPC requests
+(the exact JSON shape Postman uses internally for saved gRPC requests isn't
+publicly documented, so this was hand-built from best-effort knowledge, not
+a verified export). If anything looks off:
+
+- Import it under its own name ("LifeSure gRPC (generated)") so it can't
+  collide with or overwrite anything else in your workspace.
+- Per request, you'll likely need to click **Select a method** once to bind
+  it to the live service via reflection — the address and body are already
+  filled in, this just wires up the method picker.
+- Check the **Metadata** tab has `x-api-key` / `{{api_key}}` — it was set
+  via the request's `header` array, which may or may not carry over to gRPC
+  metadata on import. Add it manually if it didn't.
+- For the two streaming requests (`SubmitMedicalHistory`, `ProcessClaim`),
+  only the *first* message is pre-filled; each request's description lists
+  the remaining messages to `Send` manually, in order.
+
+If the import doesn't produce usable gRPC requests at all, fall back to
+Option B below — those manual steps are fully verified against the live
+servers.
+
+## Option B: build each request by hand
 
 For every request: **New → gRPC**. Because all four servers register gRPC
 reflection, Postman auto-discovers the service and its methods as soon as

@@ -1,0 +1,150 @@
+{
+	"info": {
+		"_postman_id": "af1a3ce9-0de2-4895-926a-daac5934ec2e",
+		"name": "LifeSure gRPC (generated)",
+		"description": "Best-effort, hand-authored collection for the LifeSure gRPC training project. Import this as a NEW collection (it already has a distinct name) rather than replacing anything. Addresses and message bodies are pre-filled and confirmed against the live servers; the exact JSON shape Postman uses internally for saved gRPC requests isn't publicly documented, so after import you will likely need to click \"Select a method\" once per request (reflection will populate it instantly since the servers register it) and re-check that the x-api-key metadata carried over as expected -- add it on the Metadata tab if it didn't. Import the sibling LifeSure.postman_environment.json first and select it as the active environment.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "QuoteService",
+			"item": [
+				{
+					"name": "GetQuote",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{quote_addr}}",
+							"host": ["{{quote_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"age\": 45,\n  \"smoker\": false,\n  \"coverage_amount\": {\n    \"currency_code\": \"USD\",\n    \"minor_units\": \"25000000\"\n  },\n  \"term_years\": 20\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Unary. Service lifesure.quote.QuoteService, method GetQuote. Copy the response's quote_id and monthly_premium.minor_units into the quote_id/underwriting body below."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UnderwritingService",
+			"item": [
+				{
+					"name": "SubmitMedicalHistory",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{underwriting_addr}}",
+							"host": ["{{underwriting_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"context\": {\n    \"quote_id\": \"{{quote_id}}\",\n    \"age\": 45,\n    \"smoker\": false,\n    \"base_monthly_premium\": {\n      \"currency_code\": \"USD\",\n      \"minor_units\": \"13956\"\n    },\n    \"base_risk_tier\": \"RISK_TIER_STANDARD\"\n  }\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Client-streaming. Service lifesure.underwriting.UnderwritingService, method SubmitMedicalHistory.\n\nSteps: fill quote_id and base_monthly_premium.minor_units from GetQuote's response, click Invoke to send this context message first, then click Send for each of the following three messages in order, then End Streaming to get the single UnderwritingDecision back:\n\n1) {\"record\": {\"type\": \"RECORD_TYPE_CONDITION\", \"description\": \"controlled hypertension\", \"severity\": 3}}\n2) {\"record\": {\"type\": \"RECORD_TYPE_MEDICATION\", \"description\": \"lisinopril, daily\", \"severity\": 2}}\n3) {\"record\": {\"type\": \"RECORD_TYPE_LIFESTYLE\", \"description\": \"non-smoker, occasional alcohol\", \"severity\": 1}}"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PolicyService",
+			"item": [
+				{
+					"name": "CreatePolicy",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{policy_addr}}",
+							"host": ["{{policy_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"quote_id\": \"{{quote_id}}\",\n  \"holder_id\": \"{{holder_id}}\",\n  \"holder_name\": \"{{holder_name}}\",\n  \"monthly_premium\": {\n    \"currency_code\": \"USD\",\n    \"minor_units\": \"16188\"\n  },\n  \"coverage_amount\": {\n    \"currency_code\": \"USD\",\n    \"minor_units\": \"25000000\"\n  },\n  \"term_years\": 20\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Unary. Service lifesure.policy.PolicyService, method CreatePolicy. Set monthly_premium.minor_units from the underwriting decision's adjusted_monthly_premium. Copy the response's policy_id into the policy_id environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "GetPolicy",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{policy_addr}}",
+							"host": ["{{policy_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"policy_id\": \"{{policy_id}}\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Unary. Service lifesure.policy.PolicyService, method GetPolicy."
+					},
+					"response": []
+				},
+				{
+					"name": "ListPolicies",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{policy_addr}}",
+							"host": ["{{policy_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"holder_id\": \"{{holder_id}}\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Server-streaming. Service lifesure.policy.PolicyService, method ListPolicies. Click Invoke once; matching policies stream in one by one."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ClaimsService",
+			"item": [
+				{
+					"name": "ProcessClaim",
+					"request": {
+						"method": "GRPC",
+						"header": [
+							{ "key": "x-api-key", "value": "{{api_key}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{claims_addr}}",
+							"host": ["{{claims_addr}}"]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"policy_id\": \"{{policy_id}}\",\n  \"type\": \"CLAIM_EVENT_TYPE_OPENED\",\n  \"detail\": \"hospitalization claim\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"description": "Bidirectional streaming. Service lifesure.claims.ClaimsService, method ProcessClaim.\n\nSteps: click Invoke to send this OPENED event first (a CLAIM_STAGE_RECEIVED update comes back with the server-assigned claim_id -- copy it into the claim_id variable), then Send each of the following in order, reading the status update after each:\n\n1) {\"policy_id\": \"{{policy_id}}\", \"type\": \"CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED\", \"detail\": \"discharge summary\"}\n2) {\"policy_id\": \"{{policy_id}}\", \"type\": \"CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED\", \"detail\": \"itemized invoice\"}\n3) {\"policy_id\": \"{{policy_id}}\", \"type\": \"CLAIM_EVENT_TYPE_CLOSED\", \"detail\": \"all documents submitted\"}\n\nThen End Streaming."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
