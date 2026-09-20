@@ -9,8 +9,8 @@ documented, so rather than risk writing files there that fail to load — or
 that corrupt the sync back to your actual Postman workspace — this guide
 uses the plain, well-documented **Postman Environment** import instead, plus
 step-by-step instructions for building the gRPC requests directly in
-Postman's UI. It's a few minutes of clicking, but every step below is
-something Postman's own docs confirm works.
+Postman's UI. It's a few minutes of clicking, but every step below has been
+run against the live servers and confirmed working.
 
 ## 1. Start the four services
 
@@ -42,9 +42,12 @@ needed. Add `x-api-key` / `{{api_key}}` on the **Metadata** tab of every
 request (all four services reject calls without it). Put the message JSON
 on the **Message** tab.
 
-Note: our `.proto` fields are `snake_case`, but protobuf's JSON mapping
-(which Postman follows) renders them as `lowerCamelCase` — that's why the
-JSON below uses `coverageAmount`, not `coverage_amount`.
+**Field naming:** unlike `grpcurl`/most protobuf-JSON libraries (which
+convert to `lowerCamelCase`), Postman's gRPC client builds its message
+editor straight from the reflected proto descriptors and uses the exact
+`snake_case` field names as declared in the `.proto` files — confirmed by
+clicking **Use Example Message** in the app. Every body below uses
+`snake_case` to match.
 
 ### QuoteService.GetQuote — unary
 
@@ -55,14 +58,24 @@ JSON below uses `coverageAmount`, not `coverage_amount`.
 {
   "age": 45,
   "smoker": false,
-  "coverageAmount": { "currencyCode": "USD", "minorUnits": 25000000 },
-  "termYears": 20
+  "coverage_amount": { "currency_code": "USD", "minor_units": "25000000" },
+  "term_years": 20
 }
 ```
 
-Copy the returned `quoteId` and `monthlyPremium.minorUnits` into the
-`quote_id` environment variable (and note the premium — you'll need it for
-the next step).
+Response looks like:
+
+```json
+{
+  "quote_id": "quo-e89248fa",
+  "monthly_premium": { "currency_code": "USD", "minor_units": "13956" },
+  "risk_tier": "RISK_TIER_STANDARD",
+  "expires_at": "2026-10-20T16:33:48Z"
+}
+```
+
+Copy `quote_id` into the `quote_id` environment variable, and note
+`monthly_premium.minor_units` — you'll need it for the next step.
 
 ### UnderwritingService.SubmitMedicalHistory — client-streaming
 
@@ -76,11 +89,11 @@ branch is set, by its own field name — not wrapped in `payload`):
 ```json
 {
   "context": {
-    "quoteId": "<paste quote_id>",
+    "quote_id": "<paste quote_id>",
     "age": 45,
     "smoker": false,
-    "baseMonthlyPremium": { "currencyCode": "USD", "minorUnits": <paste from GetQuote> },
-    "baseRiskTier": "RISK_TIER_STANDARD"
+    "base_monthly_premium": { "currency_code": "USD", "minor_units": "<paste monthly_premium.minor_units from GetQuote>" },
+    "base_risk_tier": "RISK_TIER_STANDARD"
   }
 }
 ```
@@ -97,8 +110,17 @@ Then send these three, one **Send** click each:
 { "record": { "type": "RECORD_TYPE_LIFESTYLE", "description": "non-smoker, occasional alcohol", "severity": 1 } }
 ```
 
-Click **End Streaming** — the response pane shows the `UnderwritingDecision`
-with `approved`, `finalRiskTier`, and `adjustedMonthlyPremium`.
+Click **End Streaming** — the response pane shows the `UnderwritingDecision`:
+
+```json
+{
+  "quote_id": "quo-e89248fa",
+  "approved": true,
+  "final_risk_tier": "RISK_TIER_STANDARD",
+  "adjusted_monthly_premium": { "currency_code": "USD", "minor_units": "16188" },
+  "notes": "minor risk factors found; premium adjusted"
+}
+```
 
 ### PolicyService.CreatePolicy — unary
 
@@ -106,21 +128,21 @@ with `approved`, `finalRiskTier`, and `adjustedMonthlyPremium`.
 
 ```json
 {
-  "quoteId": "<quote_id>",
-  "holderId": "{{holder_id}}",
-  "holderName": "{{holder_name}}",
-  "monthlyPremium": { "currencyCode": "USD", "minorUnits": <adjustedMonthlyPremium.minorUnits from the decision> },
-  "coverageAmount": { "currencyCode": "USD", "minorUnits": 25000000 },
-  "termYears": 20
+  "quote_id": "<quote_id>",
+  "holder_id": "{{holder_id}}",
+  "holder_name": "{{holder_name}}",
+  "monthly_premium": { "currency_code": "USD", "minor_units": "<adjusted_monthly_premium.minor_units from the decision>" },
+  "coverage_amount": { "currency_code": "USD", "minor_units": "25000000" },
+  "term_years": 20
 }
 ```
 
-Copy the returned `policyId` into the `policy_id` environment variable.
+Copy the returned `policy_id` into the `policy_id` environment variable.
 
 ### PolicyService.GetPolicy — unary
 
 ```json
-{ "policyId": "{{policy_id}}" }
+{ "policy_id": "{{policy_id}}" }
 ```
 
 ### PolicyService.ListPolicies — server-streaming
@@ -128,7 +150,7 @@ Copy the returned `policyId` into the `policy_id` environment variable.
 - Method `ListPolicies`, click **Invoke** once:
 
 ```json
-{ "holderId": "{{holder_id}}" }
+{ "holder_id": "{{holder_id}}" }
 ```
 
 Responses stream into the pane as each matching policy is sent (there's a
@@ -141,20 +163,20 @@ small artificial delay per policy, so you can watch them arrive).
   `ClaimStatusUpdate` arrives after each one:
 
 ```json
-{ "policyId": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_OPENED", "detail": "hospitalization claim" }
+{ "policy_id": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_OPENED", "detail": "hospitalization claim" }
 ```
 ```json
-{ "policyId": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", "detail": "discharge summary" }
+{ "policy_id": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", "detail": "discharge summary" }
 ```
 ```json
-{ "policyId": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", "detail": "itemized invoice" }
+{ "policy_id": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", "detail": "itemized invoice" }
 ```
 ```json
-{ "policyId": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_CLOSED", "detail": "all documents submitted" }
+{ "policy_id": "{{policy_id}}", "type": "CLAIM_EVENT_TYPE_CLOSED", "detail": "all documents submitted" }
 ```
 
-The first response carries the server-assigned `claimId` — copy it into the
-`claim_id` variable if you want to reference it elsewhere. Click **End
+The first response carries the server-assigned `claim_id` — copy it into
+the `claim_id` variable if you want to reference it elsewhere. Click **End
 Streaming** when done.
 
 ## Trying failure cases
@@ -162,6 +184,6 @@ Streaming** when done.
 - Remove the `x-api-key` metadata entry on any request → expect
   `UNAUTHENTICATED`.
 - `GetQuote` with `age: 15` → expect `INVALID_ARGUMENT`.
-- `GetPolicy` with a made-up `policyId` → expect `NOT_FOUND`.
+- `GetPolicy` with a made-up `policy_id` → expect `NOT_FOUND`.
 - Send only one document before `CLAIM_EVENT_TYPE_CLOSED` → the claim comes
   back `CLAIM_STAGE_DENIED` instead of `CLAIM_STAGE_APPROVED`.
