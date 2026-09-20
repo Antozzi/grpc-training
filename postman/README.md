@@ -33,6 +33,43 @@ by hand as you go (click the eye icon next to the environment dropdown →
 edit → paste the ID from a response, since there's no collection scripting
 here to do it for you).
 
+## Whole-flow runbook (condensed)
+
+The full end-to-end sequence, all six requests, one screen — useful as a
+checklist, or to hand to an AI agent rebuilding the collection by hand from
+the detailed steps further down:
+
+1. `QuoteService.GetQuote` → save `quote_id`, `monthly_premium.minor_units`.
+2. `UnderwritingService.SubmitMedicalHistory` → Invoke with `context` (using
+   the two values above), `Send` three `record` messages, `End Streaming` →
+   save `adjusted_monthly_premium.minor_units`. If `approved: false`, stop.
+3. `PolicyService.CreatePolicy` (using `quote_id` + the adjusted premium) →
+   save `policy_id`.
+4. `PolicyService.GetPolicy` and `PolicyService.ListPolicies` (using
+   `policy_id` / `holder_id`) → read-only checks, nothing to carry forward.
+5. `ClaimsService.ProcessClaim` → Invoke with `OPENED` → save `claim_id`,
+   `Send` two `DOCUMENT_SUBMITTED` events, `Send` `CLOSED` → expect
+   `CLAIM_STAGE_APPROVED`, `End Streaming`.
+
+Exact bodies and addresses for each step are in the sections below.
+
+**Fully automated alternative:** `make demo` (`cmd/demo/main.go`) already
+runs this entire sequence as real Go code against the same four servers —
+confirmed working end-to-end. Reach for that instead of the manual Postman
+flow when you just need to exercise the whole thing, not inspect it request
+by request.
+
+**Auto-chaining variables inside Postman itself:** gRPC requests do have a
+**Scripts** tab with `Before invoke` / `On message` / `After response`
+hooks, and `pm.environment.set(...)` works there same as HTTP — see
+[Postman's gRPC scripting docs](https://learning.postman.com/docs/sending-requests/grpc/scripting-in-grpc-request)
+and [test examples](https://learning.postman.com/docs/sending-requests/grpc/test-examples/).
+Responses are read via `pm.response.messages` (e.g.
+`pm.response.messages.idx(0).data`), not `pm.response.json()` — that part's
+confirmed from the docs, but the exact accessor for a single unary
+response's fields wasn't fully documented anywhere I could verify, so treat
+it as a starting point to confirm live in the app, not copy-paste-ready.
+
 ## Why there's no importable collection file here
 
 A hand-authored collection JSON (guessing at Postman's internal schema for
