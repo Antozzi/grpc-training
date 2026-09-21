@@ -143,6 +143,21 @@ editor straight from the reflected proto descriptors and uses the exact
 clicking **Use Example Message** in the app. Every body below uses
 `snake_case` to match.
 
+**Gotcha: don't click Invoke on every streamed message.** If you (or
+Postman's "generate collection from codebase" feature) save each message of
+`SubmitMedicalHistory` or `ProcessClaim` as its own collection item — "1.
+context", "2. record: condition", etc. — it's tempting to open each one and
+click **Invoke**. Don't: **Invoke** always opens a brand-new stream using
+only that item's body as the first message sent, so invoking "2. record:
+condition" on its own sends a stream whose first (and only) message is that
+record, with no `ApplicationContext` — and the server rejects it with
+`INVALID_ARGUMENT: first message must carry an ApplicationContext`. The fix
+is to **Invoke** only the first message, then paste each subsequent
+message's body into that same open request and click **Send** (never
+Invoke again) for every message after it, ending with **End Streaming**.
+One invoked stream carries the whole sequence — saved items after the first
+are just a place to copy message bodies from.
+
 ### QuoteService.GetQuote — unary
 
 - Address: `{{quote_addr}}`, service `lifesure.quote.QuoteService`, method `GetQuote`
