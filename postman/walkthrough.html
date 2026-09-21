@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LifeSure Postman Walkthrough</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --border: #e2e2df;
+    --text: #1c1c1a;
+    --muted: #68685f;
+    --accent: #1f6f50;
+    --accent-text: #ffffff;
+    --warn-bg: #fff4e0;
+    --warn-border: #e8b45a;
+    --warn-text: #6b4a12;
+    --code-bg: #f1f1ee;
+    --danger: #b3432b;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17181a;
+      --panel: #202225;
+      --border: #35373a;
+      --text: #ecece9;
+      --muted: #a3a39a;
+      --accent: #4caf82;
+      --accent-text: #0d1a12;
+      --warn-bg: #3a2f13;
+      --warn-border: #8a6a1f;
+      --warn-text: #f2d59a;
+      --code-bg: #16181a;
+      --danger: #e2836a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17181a;
+    --panel: #202225;
+    --border: #35373a;
+    --text: #ecece9;
+    --muted: #a3a39a;
+    --accent: #4caf82;
+    --accent-text: #0d1a12;
+    --warn-bg: #3a2f13;
+    --warn-border: #8a6a1f;
+    --warn-text: #f2d59a;
+    --code-bg: #16181a;
+    --danger: #e2836a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  img { max-width: 100%; }
+
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 24px 60px;
+  }
+
+  header.top { margin-bottom: 20px; }
+  header.top h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  header.top p { margin: 0; color: var(--muted); }
+
+  .dots { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+  .dot {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .dot.done { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .dot.current { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  details.config {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+  }
+  details.config summary { cursor: pointer; font-weight: 600; }
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card .eyebrow { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card h2 { margin: 4px 0 10px; font-size: 1.15rem; }
+
+  .rpc-line {
+    display: flex; flex-wrap: wrap; gap: 8px 16px;
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+  }
+  .rpc-line span b { color: var(--muted); font-family: inherit; font-weight: 600; }
+
+  .action-pill {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--accent-text);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-weight: 600;
+    font-size: 12.5px;
+    margin-bottom: 10px;
+  }
+
+  .warning {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    color: var(--warn-text);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+
+  .body-block { position: relative; margin: 10px 0; }
+  textarea.body {
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    background: var(--code-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .copy-btn.copied { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  .expect { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .expect code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+  .capture {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+  .capture h3 { font-size: 13px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+  .capture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .nav .right { display: flex; gap: 8px; }
+  button.nav-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.nav-btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button.nav-btn:disabled { opacity: .4; cursor: default; }
+
+  .summary {
+    margin-top: 26px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+  }
+  .summary h3 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; }
+  .summary table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .summary td { padding: 4px 0; }
+  .summary td:first-child { color: var(--muted); width: 45%; }
+  .summary td:last-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+
+  .reset-row { margin-top: 14px; text-align: right; }
+  .reset-row button {
+    background: none; border: none; color: var(--danger);
+    font-size: 12px; cursor: pointer; padding: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>LifeSure Postman Walkthrough</h1>
+    <p>Follow each step in Postman, then paste values back here so later steps fill in for you. Keep this tab open next to Postman.</p>
+  </header>
+
+  <details class="config" id="configPanel">
+    <summary>Environment values (edit if yours differ)</summary>
+    <div class="config-grid">
+      <div class="field"><label for="cfg-quoteAddr">quote_addr</label><input id="cfg-quoteAddr"></div>
+      <div class="field"><label for="cfg-underwritingAddr">underwriting_addr</label><input id="cfg-underwritingAddr"></div>
+      <div class="field"><label for="cfg-policyAddr">policy_addr</label><input id="cfg-policyAddr"></div>
+      <div class="field"><label for="cfg-claimsAddr">claims_addr</label><input id="cfg-claimsAddr"></div>
+      <div class="field"><label for="cfg-apiKey">api_key</label><input id="cfg-apiKey"></div>
+      <div class="field"><label for="cfg-holderId">holder_id</label><input id="cfg-holderId"></div>
+      <div class="field"><label for="cfg-holderName">holder_name</label><input id="cfg-holderName"></div>
+    </div>
+  </details>
+
+  <div class="dots" id="dots"></div>
+
+  <div class="card" id="card"></div>
+
+  <div class="nav">
+    <button class="nav-btn" id="backBtn">Back</button>
+    <div class="right">
+      <span id="stepLabel" style="color:var(--muted); font-size:12.5px; align-self:center;"></span>
+      <button class="nav-btn primary" id="nextBtn">Next</button>
+    </div>
+  </div>
+
+  <div class="summary">
+    <h3>Captured values so far</h3>
+    <table>
+      <tr><td>quote_id</td><td id="sum-quoteId">—</td></tr>
+      <tr><td>monthly_premium.minor_units</td><td id="sum-premium">—</td></tr>
+      <tr><td>underwriting approved</td><td id="sum-approved">—</td></tr>
+      <tr><td>adjusted_monthly_premium.minor_units</td><td id="sum-adjPremium">—</td></tr>
+      <tr><td>policy_id</td><td id="sum-policyId">—</td></tr>
+      <tr><td>claim_id</td><td id="sum-claimId">—</td></tr>
+    </table>
+    <div class="reset-row"><button id="resetBtn">Reset walkthrough</button></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "lifesure-walkthrough-v1";
+
+  var defaultConfig = {
+    quoteAddr: "localhost:50051",
+    underwritingAddr: "localhost:50052",
+    policyAddr: "localhost:50053",
+    claimsAddr: "localhost:50054",
+    apiKey: "lifesure-demo-key",
+    holderId: "holder-anton",
+    holderName: "Anton Dyrdin"
+  };
+
+  var defaultState = {
+    step: 0,
+    config: defaultConfig,
+    captured: {
+      quoteId: "",
+      premiumMinor: "",
+      approved: "",
+      adjPremiumMinor: "",
+      policyId: "",
+      claimId: ""
+    }
+  };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return JSON.parse(JSON.stringify(defaultState));
+      var parsed = JSON.parse(raw);
+      return {
+        step: parsed.step || 0,
+        config: Object.assign({}, defaultConfig, parsed.config || {}),
+        captured: Object.assign({}, defaultState.captured, parsed.captured || {})
+      };
+    } catch (e) {
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* private mode / storage blocked: continue without persistence */ }
+  }
+
+  var state = loadState();
+
+  function ph(val, name) {
+    return val && String(val).length ? val : "«paste " + name + "»";
+  }
+
+  var steps = [
+    {
+      title: "QuoteService.GetQuote",
+      badge: "1 — Quote",
+      action: "Invoke",
+      rpc: { addr: function (c) { return c.quoteAddr; }, service: "lifesure.quote.QuoteService", method: "GetQuote" },
+      instructions: "Anton asks how much a $250,000, 20-year policy would cost him at 45, non-smoking.",
+      body: function (c) {
+        return {
+          age: 45,
+          smoker: false,
+          coverage_amount: { currency_code: "USD", minor_units: "25000000" },
+          term_years: 20
+        };
+      },
+      expect: "quote_id, monthly_premium, risk_tier, expires_at",
+      captureFields: [
+        { key: "quoteId", label: "quote_id" },
+        { key: "premiumMinor", label: "monthly_premium.minor_units" }
+      ]
+    },
+    {
+      title: "SubmitMedicalHistory — context (first message)",
+      badge: "2 — Underwriting",
+      action: "Invoke",
+      streamNote: "This opens the stream. Click Invoke here — this is message #1.",
+      rpc: { addr: function (c) { return c.underwritingAddr; }, service: "lifesure.underwriting.UnderwritingService", method: "SubmitMedicalHistory" },
+      instructions: "Send the application context first: the quote being underwritten and its provisional price.",
+      body: function (c, cap) {
+        return {
+          context: {
+            quote_id: ph(cap.quoteId, "quote_id"),
+            age: 45,
+            smoker: false,
+            base_monthly_premium: { currency_code: "USD", minor_units: ph(cap.premiumMinor, "monthly_premium.minor_units") },
+            base_risk_tier: "RISK_TIER_STANDARD"
+          }
+        };
+      }
+    },
+    {
+      title: "SubmitMedicalHistory — record: condition",
+      badge: "2 — Underwriting",
+      action: "Send",
+      streamNote: "Paste this into the SAME open request from the previous step and click Send — not Invoke.",
+      rpc: { addr: function (c) { return c.underwritingAddr; }, service: "lifesure.underwriting.UnderwritingService", method: "SubmitMedicalHistory" },
+      instructions: "Anton reports a health condition.",
+      body: function () {
+        return { record: { type: "RECORD_TYPE_CONDITION", description: "controlled hypertension", severity: 3 } };
+      }
+    },
+    {
+      title: "SubmitMedicalHistory — record: medication",
+      badge: "2 — Underwriting",
+      action: "Send",
+      streamNote: "Same open stream — click Send, not Invoke.",
+      rpc: { addr: function (c) { return c.underwritingAddr; }, service: "lifesure.underwriting.UnderwritingService", method: "SubmitMedicalHistory" },
+      instructions: "Anton reports a medication.",
+      body: function () {
+        return { record: { type: "RECORD_TYPE_MEDICATION", description: "lisinopril, daily", severity: 2 } };
+      }
+    },
+    {
+      title: "SubmitMedicalHistory — record: lifestyle",
+      badge: "2 — Underwriting",
+      action: "Send, then End Streaming",
+      streamNote: "Same open stream — click Send, then click End Streaming to get the decision back.",
+      rpc: { addr: function (c) { return c.underwritingAddr; }, service: "lifesure.underwriting.UnderwritingService", method: "SubmitMedicalHistory" },
+      instructions: "Last record. After End Streaming, the response is the full UnderwritingDecision.",
+      body: function () {
+        return { record: { type: "RECORD_TYPE_LIFESTYLE", description: "non-smoker, occasional alcohol", severity: 1 } };
+      },
+      expect: "approved, final_risk_tier, adjusted_monthly_premium, notes — if approved is false, stop here.",
+      captureFields: [
+        { key: "adjPremiumMinor", label: "adjusted_monthly_premium.minor_units" },
+        { key: "approved", label: "approved (true/false)" }
+      ]
+    },
+    {
+      title: "PolicyService.CreatePolicy",
+      badge: "3 — Policy",
+      action: "Invoke",
+      rpc: { addr: function (c) { return c.policyAddr; }, service: "lifesure.policy.PolicyService", method: "CreatePolicy" },
+      instructions: "Underwriting approved — issue the actual policy at the adjusted price.",
+      body: function (c, cap) {
+        return {
+          quote_id: ph(cap.quoteId, "quote_id"),
+          holder_id: c.holderId,
+          holder_name: c.holderName,
+          monthly_premium: { currency_code: "USD", minor_units: ph(cap.adjPremiumMinor, "adjusted_monthly_premium.minor_units") },
+          coverage_amount: { currency_code: "USD", minor_units: "25000000" },
+          term_years: 20
+        };
+      },
+      expect: "policy_id, status, issued_at",
+      captureFields: [{ key: "policyId", label: "policy_id" }]
+    },
+    {
+      title: "PolicyService.GetPolicy",
+      badge: "3 — Policy",
+      action: "Invoke",
+      rpc: { addr: function (c) { return c.policyAddr; }, service: "lifesure.policy.PolicyService", method: "GetPolicy" },
+      instructions: "Read-only check: look up the policy Anton just got.",
+      body: function (c, cap) {
+        return { policy_id: ph(cap.policyId, "policy_id") };
+      }
+    },
+    {
+      title: "PolicyService.ListPolicies",
+      badge: "3 — Policy",
+      action: "Invoke (responses stream in)",
+      rpc: { addr: function (c) { return c.policyAddr; }, service: "lifesure.policy.PolicyService", method: "ListPolicies" },
+      instructions: "List every policy this holder owns. Responses arrive one at a time with a small delay — watch them land in the response pane.",
+      body: function (c) {
+        return { holder_id: c.holderId };
+      }
+    },
+    {
+      title: "ClaimsService.ProcessClaim — OPENED",
+      badge: "4 — Claims",
+      action: "Invoke",
+      streamNote: "This opens a NEW stream (separate from underwriting's). Click Invoke here — this is message #1 of this stream.",
+      rpc: { addr: function (c) { return c.claimsAddr; }, service: "lifesure.claims.ClaimsService", method: "ProcessClaim" },
+      instructions: "Eight months later, Anton is hospitalized and opens a claim.",
+      body: function (c, cap) {
+        return { policy_id: ph(cap.policyId, "policy_id"), type: "CLAIM_EVENT_TYPE_OPENED", detail: "hospitalization claim" };
+      },
+      expect: "first ClaimStatusUpdate carries the server-assigned claim_id",
+      captureFields: [{ key: "claimId", label: "claim_id" }]
+    },
+    {
+      title: "ProcessClaim — document 1/2",
+      badge: "4 — Claims",
+      action: "Send",
+      streamNote: "Same open stream — click Send, not Invoke.",
+      rpc: { addr: function (c) { return c.claimsAddr; }, service: "lifesure.claims.ClaimsService", method: "ProcessClaim" },
+      instructions: "Anton uploads his discharge summary.",
+      body: function (c, cap) {
+        return { policy_id: ph(cap.policyId, "policy_id"), type: "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", detail: "discharge summary" };
+      }
+    },
+    {
+      title: "ProcessClaim — document 2/2",
+      badge: "4 — Claims",
+      action: "Send",
+      streamNote: "Same open stream — click Send, not Invoke.",
+      rpc: { addr: function (c) { return c.claimsAddr; }, service: "lifesure.claims.ClaimsService", method: "ProcessClaim" },
+      instructions: "Anton uploads an itemized invoice.",
+      body: function (c, cap) {
+        return { policy_id: ph(cap.policyId, "policy_id"), type: "CLAIM_EVENT_TYPE_DOCUMENT_SUBMITTED", detail: "itemized invoice" };
+      }
+    },
+    {
+      title: "ProcessClaim — CLOSED",
+      badge: "4 — Claims",
+      action: "Send, then End Streaming",
+      streamNote: "Same open stream — click Send, then click End Streaming.",
+      rpc: { addr: function (c) { return c.claimsAddr; }, service: "lifesure.claims.ClaimsService", method: "ProcessClaim" },
+      instructions: "Anton confirms all documents are in.",
+      body: function (c, cap) {
+        return { policy_id: ph(cap.policyId, "policy_id"), type: "CLAIM_EVENT_TYPE_CLOSED", detail: "all documents submitted" };
+      },
+      expect: "final update should read CLAIM_STAGE_APPROVED — done!"
+    }
+  ];
+
+  var els = {
+    configInputs: {
+      quoteAddr: document.getElementById("cfg-quoteAddr"),
+      underwritingAddr: document.getElementById("cfg-underwritingAddr"),
+      policyAddr: document.getElementById("cfg-policyAddr"),
+      claimsAddr: document.getElementById("cfg-claimsAddr"),
+      apiKey: document.getElementById("cfg-apiKey"),
+      holderId: document.getElementById("cfg-holderId"),
+      holderName: document.getElementById("cfg-holderName")
+    },
+    dots: document.getElementById("dots"),
+    card: document.getElementById("card"),
+    backBtn: document.getElementById("backBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    stepLabel: document.getElementById("stepLabel"),
+    resetBtn: document.getElementById("resetBtn")
+  };
+
+  Object.keys(els.configInputs).forEach(function (key) {
+    var input = els.configInputs[key];
+    input.value = state.config[key];
+    input.addEventListener("input", function () {
+      state.config[key] = input.value;
+      saveState();
+      render();
+    });
+  });
+
+  function renderDots() {
+    els.dots.innerHTML = "";
+    steps.forEach(function (s, i) {
+      var d = document.createElement("div");
+      d.className = "dot" + (i < state.step ? " done" : "") + (i === state.step ? " current" : "");
+      d.textContent = i + 1;
+      d.title = s.title;
+      d.addEventListener("click", function () {
+        state.step = i;
+        saveState();
+        render();
+      });
+      els.dots.appendChild(d);
+    });
+  }
+
+  function copyToClipboard(text, btn) {
+    function markCopied() {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(markCopied, function () { fallbackCopy(text, btn, markCopied); });
+    } else {
+      fallbackCopy(text, btn, markCopied);
+    }
+  }
+
+  function fallbackCopy(text, btn, onDone) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      onDone();
+    } catch (e) {
+      btn.textContent = "Select & Ctrl+C";
+    }
+  }
+
+  function renderCard() {
+    var s = steps[state.step];
+    var addr = s.rpc.addr(state.config);
+    var bodyObj = s.body ? s.body(state.config, state.captured) : null;
+    var bodyText = bodyObj ? JSON.stringify(bodyObj, null, 2) : "";
+
+    var html = "";
+    html += '<div class="eyebrow">' + s.badge + '</div>';
+    html += "<h2>" + s.title + "</h2>";
+    html += '<span class="action-pill">' + s.action + "</span>";
+    html += '<div class="rpc-line">';
+    html += "<span><b>address</b> " + addr + "</span>";
+    html += "<span><b>service</b> " + s.rpc.service + "</span>";
+    html += "<span><b>method</b> " + s.rpc.method + "</span>";
+    html += "</div>";
+    html += '<div class="rpc-line" style="margin-top:-6px;"><span><b>metadata</b> x-api-key = ' + state.config.apiKey + "</span></div>";
+    if (s.streamNote) {
+      html += '<div class="warning">' + s.streamNote + "</div>";
+    }
+    html += "<p>" + s.instructions + "</p>";
+    if (bodyText) {
+      html += '<div class="body-block"><textarea class="body" readonly rows="' + Math.min(12, bodyText.split("\n").length + 1) + '">' + bodyText.replace(/</g, "&lt;") + '</textarea><button class="copy-btn" id="copyBtn">Copy</button></div>';
+    }
+    if (s.expect) {
+      html += '<div class="expect">Expect back: ' + s.expect + "</div>";
+    }
+    if (s.captureFields && s.captureFields.length) {
+      html += '<div class="capture"><h3>Paste from the response:</h3><div class="capture-grid">';
+      s.captureFields.forEach(function (f) {
+        html += '<div class="field"><label for="cap-' + f.key + '">' + f.label + '</label><input id="cap-' + f.key + '" data-key="' + f.key + '" value="' + (state.captured[f.key] || "").replace(/"/g, "&quot;") + '"></div>';
+      });
+      html += "</div></div>";
+    }
+
+    els.card.innerHTML = html;
+
+    if (bodyText) {
+      document.getElementById("copyBtn").addEventListener("click", function () {
+        copyToClipboard(bodyText, this);
+      });
+    }
+    if (s.captureFields) {
+      s.captureFields.forEach(function (f) {
+        var input = document.getElementById("cap-" + f.key);
+        input.addEventListener("input", function () {
+          state.captured[f.key] = input.value;
+          saveState();
+          renderSummary();
+        });
+      });
+    }
+  }
+
+  function renderSummary() {
+    document.getElementById("sum-quoteId").textContent = state.captured.quoteId || "—";
+    document.getElementById("sum-premium").textContent = state.captured.premiumMinor || "—";
+    document.getElementById("sum-approved").textContent = state.captured.approved || "—";
+    document.getElementById("sum-adjPremium").textContent = state.captured.adjPremiumMinor || "—";
+    document.getElementById("sum-policyId").textContent = state.captured.policyId || "—";
+    document.getElementById("sum-claimId").textContent = state.captured.claimId || "—";
+  }
+
+  function renderNav() {
+    els.backBtn.disabled = state.step === 0;
+    els.nextBtn.textContent = state.step === steps.length - 1 ? "Done" : "Next";
+    els.nextBtn.disabled = state.step === steps.length - 1;
+    els.stepLabel.textContent = "Step " + (state.step + 1) + " of " + steps.length;
+  }
+
+  function render() {
+    renderDots();
+    renderCard();
+    renderSummary();
+    renderNav();
+  }
+
+  els.backBtn.addEventListener("click", function () {
+    if (state.step > 0) { state.step -= 1; saveState(); render(); }
+  });
+  els.nextBtn.addEventListener("click", function () {
+    if (state.step < steps.length - 1) { state.step += 1; saveState(); render(); }
+  });
+  els.resetBtn.addEventListener("click", function () {
+    state = JSON.parse(JSON.stringify(defaultState));
+    Object.keys(els.configInputs).forEach(function (key) {
+      els.configInputs[key].value = state.config[key];
+    });
+    saveState();
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

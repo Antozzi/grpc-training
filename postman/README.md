@@ -43,6 +43,14 @@ walked through by hand in Postman instead:
 Each step below is one of these calls, in the same order, with the exact
 address and message to send.
 
+**Prefer clicking through it instead of reading?** Open
+[`postman/walkthrough.html`](./walkthrough.html) in a browser tab next to
+Postman — it's the same sequence as a step-by-step wizard: each step shows
+the address/method/body to use, a Next button to advance, and fields to
+paste in the IDs Postman hands back (`quote_id`, `policy_id`, `claim_id`,
+premiums) so later steps' bodies fill themselves in. It's a static file, no
+server needed — just open it directly.
+
 ## A note on what's in this folder
 
 Postman auto-created `.postman/` and `postman/postman/` here as part of its
